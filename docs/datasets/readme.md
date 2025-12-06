@@ -152,7 +152,7 @@ structură GitHub complet funcțională
 - [✅] Structură repository configurată
 - [✅] Dataset analizat (EDA realizată)
 - [✅] Date preprocesate
-- [ ] Seturi train/val/test generate
-- [ ] Documentație actualizată în README + `data/README.md`
+- [✅] Seturi train/val/test generate
+- [✅] Documentație actualizată în README + `data/README.md`
 
 ---
