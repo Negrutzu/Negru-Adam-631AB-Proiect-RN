@@ -118,23 +118,6 @@ stateDiagram-v2
 
     Starea ERROR este esențială pentru că în mediul industrial imaginile pot veni corupte de la cameră sau formatul poate fi neacceptat.
 
-    Deoarece nu pot genera direct un fișier fizic pe care să dai click să-l descarci (sunt un AI bazat pe text), am o soluție mai rapidă și sigură pentru tine.
-
-Am scris un script Python care va crea automat fișierul README_Etapa4_Arhitectura_SIA_03.12.2025.md la tine în folder, cu tot textul corect, formatarea și caracterele românești incluse.
-
-Cum procedezi (durează 10 secunde):
-Creează un fișier nou numit create_readme.py în folderul proiectului.
-
-Dă Copy/Paste la codul de mai jos în el.
-
-Rulează-l în terminal: python3 create_readme.py
-
-Imediat va apărea fișierul README complet, gata de predare.
-
-Python
-
-import os
-
 # Continutul complet al README-ului
 readme_content = """# 📘 README – Etapa 4: Arhitectura Completă a Aplicației SIA bazată pe Rețele Neuronale
 
