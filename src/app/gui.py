@@ -2,43 +2,70 @@ import streamlit as st
 import tensorflow as tf
 import numpy as np
 import cv2
-from PIL import Image
+from PIL import Image, ImageOps
 import os
 
-st.title("🚗 SIA Piese Auto - Etapa 4")
-st.write("Modul de clasificare (Arhitectură funcțională)")
+st.set_page_config(page_title="SIA Piese Auto", layout="centered")
 
-model_path = "models/untrained_model.h5"
+st.title("SIA Piese Auto - Etapa 5")
+st.write("Modul de clasificare cu inferenta reala")
 
-if os.path.exists(model_path):
-    model = tf.keras.models.load_model(model_path)
-    st.success("Sistem inițializat. Model RN încărcat.")
-else:
-    st.error("Modelul lipseste! Rulează mai întâi 'src/neural_network/model_def.py'")
+model_path = "models/trained_model.h5"
+LABELS = ['aripa', 'capota', 'portbagaj', 'usa_dreapta', 'usa_stanga']
+
+@st.cache_resource
+def load_model():
+    if os.path.exists(model_path):
+        return tf.keras.models.load_model(model_path)
+    return None
+
+model = load_model()
+
+if model is None:
+    st.error("Modelul nu a fost gasit.")
     st.stop()
 
-uploaded_file = st.file_uploader("Încarcă o imagine cu o piesă", type=["png", "jpg"])
+uploaded_file = st.file_uploader("Incarca imagine", type=["png", "jpg", "jpeg"])
 
 if uploaded_file is not None:
-    image = Image.open(uploaded_file)
-    st.image(image, caption='Imaginea încărcată', width=300)
+    image = Image.open(uploaded_file).convert('L')
     
-    if st.button("Identifică Piesa"):
-        img_array = np.array(image)
-        img_resized = cv2.resize(img_array, (128, 128))
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.image(image, caption='Imagine Originala', use_container_width=True)
+    
+    invert = st.checkbox("Inverseaza Culorile", value=True)
+    
+    if invert:
+        image = ImageOps.invert(image)
+        with col1:
+            st.image(image, caption='Imagine Procesata', use_container_width=True)
+
+    if st.button("Identifica Piesa"):
+        img_resized = image.resize((128, 128))
+        img_array = np.array(img_resized)
         
-        if len(img_resized.shape) == 3:
-            img_gray = cv2.cvtColor(img_resized, cv2.COLOR_RGB2GRAY)
-        else:
-            img_gray = img_resized
+        img_batch = np.expand_dims(img_array, axis=0) 
+        img_batch = np.expand_dims(img_batch, axis=-1)
+
+        input_data = img_batch.astype('float32')
+        
+        preds = model.predict(input_data)
+        
+        probs = preds[0]
+        if not np.isclose(np.sum(probs), 1.0, atol=1e-5):
+            probs = tf.nn.softmax(preds[0]).numpy()
             
-        input_data = img_gray.reshape(1, 128, 128, 1) / 255.0
-        
-        pred = model.predict(input_data)
-        clasa = np.argmax(pred)
-        
-        labels = ["Aripă", "Capotă", "Portbagaj", "Ușă Dreapta", "Ușă Stânga"]
-        rezultat = labels[clasa] if clasa < 5 else "Necunoscut"
-        
-        st.header(f"Rezultat: {rezultat}")
-        st.warning("Atenție: Modelul este neantrenat (rezultat aleatoriu).")
+        class_idx = np.argmax(probs)
+        predicted_label = LABELS[class_idx]
+        confidence = 100 * probs[class_idx]
+
+        st.divider()
+        with col2:
+            st.subheader(f"Rezultat: {predicted_label}")
+            st.write(f"Incredere: {confidence:.2f}%")
+            
+            st.write("Statistici per clasa:")
+            for i, label in enumerate(LABELS):
+                st.progress(float(probs[i]), text=f"{label}: {probs[i]*100:.1f}%")
